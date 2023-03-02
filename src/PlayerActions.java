@@ -12,6 +12,7 @@ public class PlayerActions {
     private String username;
     private DataInputStream flujoEntrada;
     private DataOutputStream flujoSalida;
+    private  boolean isInGame=false;
 
     public PlayerActions(Socket socket, String username) {
         this.socket = socket;
@@ -28,6 +29,7 @@ public class PlayerActions {
         shareMessages(username + " se ha unido a la partida. " + playerList.size() + "/5");
 
         if (playerList.size() == 5) {
+            isInGame=true;
             miniGame();
 
         }
@@ -45,13 +47,22 @@ public class PlayerActions {
 
         while (position <5) {
             selectPlayer(); // Selecciona jugador se activa booleano
-            endTurn(); // Espera 15 segundos para desactivar turno.
+            Thread endTurnThread = new Thread(this::endTurn);
+            endTurnThread.start();// Espera 15 segundos para desactivar turno.
+            try {
+                endTurnThread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
+
         shareMessages("Historia final:" + history);
 
 
     }
-
+    public static void test(){
+        System.out.println("Estoy bloqueadooooooooooo");
+    }
     public void shareMessages(String message) {
 
         for (PlayerActions playerActions : playerList) {
@@ -100,17 +111,18 @@ public class PlayerActions {
     }
 
     public void endTurn() {
-        System.out.println("tratando de terminar turno");
 
-        try {
-            Thread.sleep(15000);
-            playerList.get(position).flujoSalida.writeUTF("B:False");
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println("15 segundos han pasado!");
+            System.out.println("tratando de terminar turno");
+            try {
+                Thread.sleep(15000);
+                playerList.get(position).flujoSalida.writeUTF("B:False");
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("15 segundos han pasado!");
+            position++;
 
-        position++;
+
     }
 
 
@@ -128,6 +140,9 @@ public class PlayerActions {
 
                 String message = flujoEntrada.readUTF();
                 shareMessages(message);
+                if(isInGame){
+                    history= history + " " + message;
+                }
 
 
             }

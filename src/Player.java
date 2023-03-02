@@ -34,6 +34,7 @@ public class Player {
                 if(turno){
                     System.out.print("Es tu turno!");
                     String tuMensaje = sc.nextLine();
+                    PlayerActions.test();
                     flujoSalida.writeUTF(tuMensaje);
                 }
 
